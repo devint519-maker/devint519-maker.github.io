@@ -285,6 +285,16 @@ const RULESETS = [
   { id: "m_row",   name: "M-Row",   glyph: "ま", chars: ["ま","み","む","め","も"], tier: 0, family: "row" },
   { id: "r_row",   name: "R-Row",   glyph: "ら", chars: ["ら","り","る","れ","ろ"], tier: 0, family: "row" },
 
+  // ----- tier 0 (adept entry) — katakana single rows -----
+  { id: "ka_vowels", name: "Kata Vowels", glyph: "ア", chars: ["ア","イ","ウ","エ","オ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_k_row",  name: "Kata K-Row",  glyph: "カ", chars: ["カ","キ","ク","ケ","コ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_s_row",  name: "Kata S-Row",  glyph: "サ", chars: ["サ","シ","ス","セ","ソ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_t_row",  name: "Kata T-Row",  glyph: "タ", chars: ["タ","チ","ツ","テ","ト"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_n_row",  name: "Kata N-Row",  glyph: "ナ", chars: ["ナ","ニ","ヌ","ネ","ノ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_h_row",  name: "Kata H-Row",  glyph: "ハ", chars: ["ハ","ヒ","フ","ヘ","ホ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_m_row",  name: "Kata M-Row",  glyph: "マ", chars: ["マ","ミ","ム","メ","モ"],                                           tier: 1200, family: "kata-row" },
+  { id: "ka_yw_row", name: "Kata Y·R·W+N",glyph: "ヤ", chars: ["ヤ","ユ","ヨ","ラ","リ","ル","レ","ロ","ワ","ヲ","ン"],             tier: 1200, family: "kata-row" },
+
   // ----- tier 1 (apprentice) — bundles -----
   { id: "vk",      name: "Vowels + K",     glyph: "あ", chars: HCHARS.slice(0,10), tier: 1000, family: "bundle" },
   { id: "vks",     name: "Early Hiragana", glyph: "さ", chars: HCHARS.slice(0,15), tier: 1000, family: "bundle" },
@@ -347,18 +357,18 @@ function availableRulesets(rank) {
   } else if (t === "adept-low") {
     pool = RULESETS.filter(r => ["vks","first25","full_hira"].includes(r.id) || r.family === "row");
   } else if (t === "adept") {
-    // base sets start mixing with dakuten/handakuten
+    // base sets start mixing with dakuten/handakuten; katakana rows unlock
     pool = RULESETS.filter(r => [
       "first25","full_hira","early_kata","mixed_basic",
       "h_dakuten","h_handakuten","h_dak_han"
-    ].includes(r.id));
+    ].includes(r.id) || r.family === "kata-row");
   } else if (t === "adept-high") {
-    // katakana voiced + first digraphs unlock
+    // katakana voiced + first digraphs unlock; kata rows still available
     pool = RULESETS.filter(r => [
       "full_hira","full_kata","early_kata","mixed_basic",
       "h_dakuten","h_dak_han","k_dakuten","k_dak_han",
       "hira_extended","h_digraphs","h_digraphs_voiced"
-    ].includes(r.id));
+    ].includes(r.id) || r.family === "kata-row");
   } else if (t === "master") {
     pool = RULESETS.filter(r => [
       "full_hira","full_kata","mixed_basic","full_mixed",
