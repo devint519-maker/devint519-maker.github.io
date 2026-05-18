@@ -325,8 +325,7 @@ const TEXTBOOK_CHAPTERS = [
 
   {
     id: "h_yw_row",
-    customChars: ["や","ゆ","よ","わ","を","ん"],
-    drillRulesetId: "full_hira",
+    rulesetId: "yw_row",
     script: "hiragana",
     title: "Hiragana Y/W-Row + ん",
     subtitle: "や ゆ よ わ を ん — the leftovers",
