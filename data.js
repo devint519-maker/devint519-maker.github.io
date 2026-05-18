@@ -284,6 +284,7 @@ const RULESETS = [
   { id: "h_row",   name: "H-Row",   glyph: "は", chars: ["は","ひ","ふ","へ","ほ"], tier: 0, family: "row" },
   { id: "m_row",   name: "M-Row",   glyph: "ま", chars: ["ま","み","む","め","も"], tier: 0, family: "row" },
   { id: "r_row",   name: "R-Row",   glyph: "ら", chars: ["ら","り","る","れ","ろ"], tier: 0, family: "row" },
+  { id: "yw_row",  name: "Y·W-Row + ん", glyph: "や", chars: ["や","ゆ","よ","わ","を","ん"], tier: 0, family: "row" },
 
   // ----- tier 0 (adept entry) — katakana single rows -----
   { id: "ka_vowels", name: "Kata Vowels", glyph: "ア", chars: ["ア","イ","ウ","エ","オ"],                                           tier: 1200, family: "kata-row" },
