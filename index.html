@@ -564,10 +564,18 @@
   }
   .card-corner.tl{top:14px; left:18px;}
   .card-corner.br{top:14px; right:18px; font-family:var(--display); font-size:18px; color:rgba(0,0,0,0.45);}
-  .card-char{
-    font-family:var(--jp); font-weight:900; font-size:200px;
-    color:#1a1d2e; line-height:1;
+  .card-char {
+    font-family: var(--jp);
+    font-weight: 900;
+    font-size: clamp(110px, 22vw, 200px);
+    color: #1a1d2e;
+    line-height: 1;
     text-shadow: 0 4px 0 rgba(0,0,0,0.06);
+    white-space: nowrap;
+    max-width: 100%;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
   }
   .card-char.dim{color:rgba(0,0,0,0.25);}
   .card-peek{
@@ -807,7 +815,7 @@
   @media (max-width: 1100px){
     .battle-stage{ grid-template-columns: 200px 1fr 200px;}
     .deck-shadow{ width:280px; height:340px;}
-    .card-char{font-size:160px;}
+    .card-char { font-size: clamp(90px, 20vw, 160px); }
     .match-end-grid{grid-template-columns: 1fr;}
     .rs-options{grid-template-columns:repeat(2,1fr);}
     .rs-tiebreak-row{grid-template-columns:1fr; gap:18px;}
