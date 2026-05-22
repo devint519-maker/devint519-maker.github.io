@@ -1258,6 +1258,127 @@ const MENU_STYLES = `
 }
 
 /* ============================================================
+   Kana reference chart
+   ============================================================ */
+.kc-wrap {
+  margin-top: 4px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 4px 4px 4px 0;
+}
+.kc-wrap::-webkit-scrollbar { width: 6px; }
+.kc-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+.kc-section { margin-bottom: 22px; }
+.kc-section:last-child { margin-bottom: 4px; }
+.kc-section-title {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 10px;
+}
+
+/* ----- gojuon grid (5 columns + label column) ----- */
+.kc-grid {
+  display: grid;
+  grid-template-columns: 36px repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.kc-corner { /* empty top-left */ }
+.kc-col-h, .kc-row-h {
+  font-size: 10px;
+  letter-spacing: 1px;
+  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.kc-col-h { padding-bottom: 4px; }
+
+.kc-cell {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 4px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;          /* lets cells shrink instead of overflow */
+}
+.kc-cell.empty {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.05);
+}
+.kc-kana {
+  font-family: serif;
+  font-size: 22px;
+  line-height: 1;
+}
+.kc-rom {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  opacity: 0.55;
+  font-variant: small-caps;
+}
+.kc-kana-dim { opacity: 0.55; font-size: 20px; margin-left: 2px; }
+
+/* ----- voiced / handakuten flat row ----- */
+.kc-flat {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.kc-cell-dual .kc-kana-pair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;        /* hira + kata sit on the same line */
+}
+
+/* ----- digraphs ----- */
+/* Use auto-fit so we get as many columns as fit at this width,
+   but each cell always holds its two glyphs on one line. */
+.kc-flat-dig {
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+}
+.kc-cell-dig { padding: 8px 6px 6px; }
+.kc-digraph {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  white-space: nowrap;        /* THE key rule — base + small never wrap */
+  line-height: 1;
+}
+.kc-kana-small {
+  font-size: 14px;            /* small kana are visually smaller */
+  opacity: 0.9;
+  margin-left: -1px;
+}
+
+/* ----- responsive ----- */
+@media (max-width: 720px) {
+  .kc-wrap { max-height: 60vh; }
+  .kc-grid { grid-template-columns: 26px repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .kc-cell { padding: 6px 2px 4px; }
+  .kc-kana { font-size: 18px; }
+  .kc-kana-small { font-size: 12px; }
+  .kc-rom { font-size: 9px; }
+  .kc-flat-dig { grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); }
+}
+@media (max-width: 420px) {
+  .kc-grid { grid-template-columns: 22px repeat(5, minmax(0, 1fr)); }
+  .kc-kana { font-size: 16px; }
+  .kc-kana-small { font-size: 11px; }
+  .kc-flat-dig { grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); }
+}
+
+/* ============================================================
    Textbook screens — chapter list + chapter reader
    ============================================================ */
 
@@ -1992,6 +2113,141 @@ function MainMenuScreen({ state, onRanked, onPractice, onFriend }) {
 }
 
 // ============================================================
+// KanaChart — read-only gojūon table used by the practice menu.
+// Cells render the kana + its romaji. Digraphs render their two
+// kana on a single line by construction (they share one cell).
+// ============================================================
+
+function KanaChart({ tab }) {
+  // Pull tables from window so we don't duplicate the data.
+  const H    = window.HIRAGANA            || [];
+  const K    = window.KATAKANA            || [];
+  const HDAK = window.HIRAGANA_DAKUTEN    || [];
+  const HHAN = window.HIRAGANA_HANDAKUTEN || [];
+  const KDAK = window.KATAKANA_DAKUTEN    || [];
+  const KHAN = window.KATAKANA_HANDAKUTEN || [];
+  const HD   = window.HIRAGANA_DIGRAPHS   || [];
+  const HDD  = window.HIRAGANA_DIGRAPHS_DAKUTEN || [];
+  const KD   = window.KATAKANA_DIGRAPHS   || [];
+  const KDD  = window.KATAKANA_DIGRAPHS_DAKUTEN || [];
+
+  // Render the 5-vowel gojūon grid. Some rows are short (や,ゆ,よ / わ,を,ん).
+  // We lay it out by mapping romaji → cell so missing slots show as blanks.
+  function gojuonGrid(list, script) {
+    const cols = ["a", "i", "u", "e", "o"];
+    // Row labels in standard gojūon order. Last row holds w-row + ん.
+    const rows = [
+      { key: "",  label: "—",  romajis: ["a","i","u","e","o"] },
+      { key: "k", label: "K",  romajis: ["ka","ki","ku","ke","ko"] },
+      { key: "s", label: "S",  romajis: ["sa","shi","su","se","so"] },
+      { key: "t", label: "T",  romajis: ["ta","chi","tsu","te","to"] },
+      { key: "n", label: "N",  romajis: ["na","ni","nu","ne","no"] },
+      { key: "h", label: "H",  romajis: ["ha","hi","fu","he","ho"] },
+      { key: "m", label: "M",  romajis: ["ma","mi","mu","me","mo"] },
+      { key: "y", label: "Y",  romajis: ["ya", null, "yu", null, "yo"] },
+      { key: "r", label: "R",  romajis: ["ra","ri","ru","re","ro"] },
+      { key: "w", label: "W",  romajis: ["wa", null, null, null, "wo"] },
+      { key: "n2", label: "N", romajis: [null, null, "n", null, null] }
+    ];
+    const map = {};
+    list.forEach(([kana, rom]) => { map[rom] = kana; });
+
+    return (
+      <div className={`kc-grid kc-grid-base kc-${script}`}>
+        <div className="kc-corner"></div>
+        {cols.map(c => <div key={c} className="kc-col-h">{c.toUpperCase()}</div>)}
+        {rows.map(row => (
+          <React.Fragment key={row.key}>
+            <div className="kc-row-h">{row.label}</div>
+            {row.romajis.map((rom, i) => (
+              <div key={i} className={`kc-cell ${!rom || !map[rom] ? "empty" : ""}`}>
+                {rom && map[rom] && (
+                  <>
+                    <span className="kc-kana">{map[rom]}</span>
+                    <span className="kc-rom">{rom}</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  // Voiced view: stack hira + kata side by side, dakuten then handakuten.
+  function voicedSection(title, hira, kata) {
+    return (
+      <div className="kc-section">
+        <div className="kc-section-title">{title}</div>
+        <div className="kc-flat">
+          {hira.map(([k, r], i) => {
+            const kk = kata[i] ? kata[i][0] : null;
+            return (
+              <div key={r + i} className="kc-cell kc-cell-dual">
+                <span className="kc-kana-pair">
+                  <span className="kc-kana">{k}</span>
+                  {kk && <span className="kc-kana kc-kana-dim">{kk}</span>}
+                </span>
+                <span className="kc-rom">{r}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Digraphs view: each cell shows the base + small kana on ONE line,
+  // never wrapping, by construction (white-space:nowrap on .kc-digraph).
+  function digraphSection(title, list) {
+    return (
+      <div className="kc-section">
+        <div className="kc-section-title">{title}</div>
+        <div className="kc-flat kc-flat-dig">
+          {list.map(([k, r]) => {
+            // k is a 2-character string like "きゃ". Split into base + small.
+            const base  = k.charAt(0);
+            const small = k.charAt(1);
+            return (
+              <div key={k} className="kc-cell kc-cell-dig">
+                <span className="kc-digraph">
+                  <span className="kc-kana">{base}</span>
+                  <span className="kc-kana kc-kana-small">{small}</span>
+                </span>
+                <span className="kc-rom">{r}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (tab === "hiragana") return gojuonGrid(H, "hira");
+  if (tab === "katakana") return gojuonGrid(K, "kata");
+  if (tab === "voiced") {
+    return (
+      <>
+        {voicedSection("Dakuten ゛ — voiced (hiragana · katakana)", HDAK, KDAK)}
+        {voicedSection("Handakuten ゜ — P-row (hiragana · katakana)", HHAN, KHAN)}
+      </>
+    );
+  }
+  if (tab === "digraphs") {
+    return (
+      <>
+        {digraphSection("Hiragana digraphs (yōon)", HD)}
+        {digraphSection("Hiragana voiced digraphs", HDD)}
+        {digraphSection("Katakana digraphs", KD)}
+        {digraphSection("Katakana voiced digraphs", KDD)}
+      </>
+    );
+  }
+  return null;
+}
+
+// ============================================================
 // PracticeMenuScreen — list of practice modes; flashcards opens
 // a tabbed multi-select picker (Hiragana / Katakana).
 // Selected decks are merged into one flashcard pool.
@@ -2003,6 +2259,12 @@ function PracticeMenuScreen({ state, onBack, onFlashcards, onMissed, onTextbook 
   const [pickerTab, setPickerTab] = useState("hiragana"); // hiragana | katakana
   const [selected, setSelected] = useState(() => new Set());
   const missedCount = window.topCharsBy(state.me, 20, "worst").length;
+  const [chartOpen, setChartOpen] = useState(false);
+  const [chartTab, setChartTab]   = useState("hiragana"); // hiragana | katakana | voiced | digraphs
+
+  // Make the two panes mutually exclusive so they don't both fight for space.
+  const openPicker = () => { setChartOpen(false); setPickerOpen(o => !o); };
+  const openChart  = () => { setPickerOpen(false); setChartOpen(o => !o); };
 
   // Classify each ruleset into a tab by inspecting its chars.
   // "Mixed" kana decks appear in BOTH kana tabs so they're discoverable
@@ -2080,7 +2342,7 @@ function PracticeMenuScreen({ state, onBack, onFlashcards, onMissed, onTextbook 
         </div>
 
         <div className="pm-modes">
-          <button className="pm-mode" style={{ "--mode-color": "#A78BFA" }} onClick={() => setPickerOpen(o => !o)}>
+          <button className="pm-mode" style={{ "--mode-color": "#A78BFA" }} onClick={openPicker}>
             <div className="pm-glyph">札</div>
             <div className="pm-mode-body">
               <div className="pm-mode-name">FLASHCARDS</div>
@@ -2121,6 +2383,19 @@ function PracticeMenuScreen({ state, onBack, onFlashcards, onMissed, onTextbook 
             <div className="pm-mode-body">
               <div className="pm-mode-name">TEXTBOOK</div>
               <div className="pm-mode-desc">Read mnemonics, shape notes, and confusables — then drop into a drill on those exact characters.</div>
+            </div>
+            <div className="pm-mode-tag ready">READY</div>
+          </button>
+
+          <button
+            className="pm-mode"
+            style={{ "--mode-color": "#FCD34D" }}
+            onClick={openChart}
+          >
+            <div className="pm-glyph">表</div>
+            <div className="pm-mode-body">
+              <div className="pm-mode-name">REFERENCE CHART</div>
+              <div className="pm-mode-desc">The whole kana system on one screen — basic, voiced, semi-voiced, and digraphs.</div>
             </div>
             <div className="pm-mode-tag ready">READY</div>
           </button>
@@ -2211,6 +2486,35 @@ function PracticeMenuScreen({ state, onBack, onFlashcards, onMissed, onTextbook 
               >
                 START DRILL ↵
               </button>
+            </div>
+          </div>
+        )}
+        {chartOpen && (
+          <div className="pm-rs-pane">
+            <div className="pm-rs-pane-head">
+              <div className="pm-rs-title">REFERENCE CHART</div>
+              <div className="pm-rs-hint">read-only · gojūon order · digraphs combine a base kana + small や/ゆ/よ</div>
+            </div>
+
+            <div className="pm-tabs">
+              {[
+                ["hiragana", "ひらがな  HIRAGANA"],
+                ["katakana", "カタカナ  KATAKANA"],
+                ["voiced",   "゛゜ VOICED"],
+                ["digraphs", "拗  DIGRAPHS"]
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  className={`pm-tab ${chartTab === id ? "active" : ""}`}
+                  onClick={() => setChartTab(id)}
+                >
+                  <span className="pm-tab-label">{label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="kc-wrap">
+              <KanaChart tab={chartTab} />
             </div>
           </div>
         )}
