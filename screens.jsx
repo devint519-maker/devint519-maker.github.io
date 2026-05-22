@@ -1210,6 +1210,18 @@ const MENU_STYLES = `
   letter-spacing: 2px;
   outline: none;
 }
+.pf-card .pf-card-char {
+  /* keep existing font-family / line-height; just enforce one line + auto-shrink */
+  white-space: nowrap;
+  max-width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  /* shrink the glyph(s) so two digraph chars always fit the 240px card */
+  font-size: clamp(80px, 22vw, 140px);
+  /* break the type-size budget across however many chars we have */
+  line-height: 1;
+}
 .pf-input-row input:focus { border-color: var(--p1); }
 .pf-input-row button {
   padding: 0 22px;
@@ -1240,6 +1252,8 @@ const MENU_STYLES = `
   opacity: 0.7;
 }
 .pf-dunno:hover { opacity: 1; border-color: rgba(255,255,255,0.2); }
+
+
 
 @media (max-width: 720px) {
   .mm-options { grid-template-columns: 1fr; }
